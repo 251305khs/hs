@@ -4,583 +4,771 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>국내 공룡 화석 발자취 지도</title>
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        fossil: {
-                            50: '#f6f7f2',
-                            100: '#e8ebd9',
-                            500: '#8c826b',
-                            700: '#5c523d',
-                            900: '#383225',
-                        },
-                        geo: {
-                            50: '#f0fdf4',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#166534',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
+    
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
     <!-- FontAwesome 아이콘 CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Noto Sans KR 폰트 -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- 카카오 지도 SDK -->
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=7d14000415f15479685251ad82a6da74&libraries=services&autoload=false"></script>
+    <!-- Kakao Map API Script (autoload=false 적용) -->
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=7d14000415f15479685251ad82a6da74&autoload=false"></script>
 
     <style>
-        body {
+        /* 기본 스타일 초기화 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             font-family: 'Noto Sans KR', sans-serif;
         }
 
-        /* 스크롤바 커스텀 스타일링 */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 9999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* 지도의 커스텀 인포윈도우 오버레이 스타일 (폭 넉넉하게 확장) */
-        .info-card-overlay {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            pointer-events: auto;
-            width: 330px; /* 기본 폭을 더 넉넉하게 지정 */
-            max-width: 90vw; /* 모바일 대응 */
-        }
-
-        /* 마커 선택 액티브 펄스 */
-        .user-pulse-marker {
-            position: relative;
-            width: 20px;
-            height: 20px;
-        }
-        .user-pulse-marker::before {
-            content: '';
-            position: absolute;
+        body, html {
             width: 100%;
             height: 100%;
-            background-color: #0284c7;
-            border-radius: 50%;
-            animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            overflow: hidden;
+            background-color: #f8fafc;
         }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.9); opacity: 0.8; }
-            100% { transform: scale(2.4); opacity: 0; }
+
+        /* 전체 레이아웃 (좌우 2분할) */
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* 왼쪽 사이드바 (검색창 + 리스트) */
+        .sidebar {
+            width: 380px;
+            height: 100%;
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        /* 사이드바 헤더 */
+        .sidebar-header {
+            padding: 20px 20px 15px;
+            background-color: #1e3a8a;
+            color: #ffffff;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .logo-area i {
+            font-size: 24px;
+            color: #f59e0b;
+        }
+
+        .logo-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: #93c5fd;
+            margin-left: 34px;
+        }
+
+        /* 검색 컨트롤 영역 */
+        .search-box {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f1f5f9;
+            background-color: #ffffff;
+        }
+
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 40px 12px 14px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #2563eb;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        /* 필터 버튼 영역 */
+        .filter-tags {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none; /* 파이어폭스 스크롤바 숨김 */
+        }
+
+        .filter-tags::-webkit-scrollbar {
+            display: none; /* 크롬/사파리 스크롤바 숨김 */
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+            color: #64748b;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            font-weight: 500;
+        }
+
+        /* 검색 결과 통계 */
+        .result-count {
+            padding: 10px 20px;
+            font-size: 12px;
+            color: #64748b;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .result-count span {
+            color: #2563eb;
+            font-weight: 700;
+        }
+
+        /* 유적지 리스트 영역 */
+        .site-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 15px;
+        }
+
+        .site-item {
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 10px;
+            background-color: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .site-item:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+        }
+
+        .site-item.active {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+        }
+
+        .site-category {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .site-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .site-address {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .site-desc {
+            font-size: 12px;
+            color: #475569;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 오른쪽 지도 영역 */
+        .map-container {
+            flex: 1;
+            height: 100%;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 내 위치 버튼 */
+        .my-location-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            z-index: 5;
+            background-color: #ffffff;
+            border: none;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #1e293b;
+            transition: all 0.2s;
+        }
+
+        .my-location-btn:hover {
+            background-color: #f8fafc;
+            color: #2563eb;
+            transform: scale(1.05);
+        }
+
+        /* 카카오맵 기본 인포윈도우 스타일 재정의 */
+        .kakao-custom-infowindow {
+            padding: 16px;
+            width: 320px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            font-family: 'Noto Sans KR', sans-serif;
+            position: relative;
+        }
+
+        .info-category {
+            font-size: 11px;
+            color: #059669;
+            background-color: #ecfdf5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .info-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .info-address {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 요청하신 설명 텍스트 박스 줄바꿈 핵심 스타일 */
+        .info-desc {
+            font-size: 13px;
+            color: #334155;
+            line-height: 1.5;
+            background-color: #f8fafc;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            
+            /* 핵심 추가 코드: 카카오 기본 nowrap 무효화 및 단어 단위 줄바꿈 설정 */
+            white-space: normal !important;
+            word-break: keep-all;
+            overflow-wrap: break-word;
+        }
+
+        .info-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 8px 0;
+            background-color: #2563eb;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .info-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* 모바일 반응형 처리 */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column-reverse;
+            }
+            .sidebar {
+                width: 100%;
+                height: 45vh;
+            }
+            .map-container {
+                height: 55vh;
+            }
         }
     </style>
 </head>
-<body class="bg-slate-100 h-screen flex flex-col overflow-hidden text-slate-800">
+<body>
 
-    <!-- Top Header -->
-    <header class="bg-geo-800 text-white px-4 py-3 shadow-lg flex items-center justify-between z-30 shrink-0 border-b border-geo-700">
-        <div class="flex items-center space-x-3">
-            <div class="bg-amber-600/90 text-white p-2.5 rounded-xl shadow-inner flex items-center justify-center">
-                <i class="fa-solid fa-bone text-lg md:text-xl"></i>
+    <div class="app-container">
+        <!-- 왼쪽 사이드바 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <i class="fa-solid fa-bone"></i>
+                    <h1 class="logo-title">국내 공룡 화석 발자취 지도</h1>
+                </div>
+                <div class="logo-subtitle">국가유산청 지질유산 데이터 기반</div>
             </div>
-            <div>
-                <h1 class="font-bold text-base md:text-lg leading-snug tracking-tight">국내 공룡 화석 발자취 지도</h1>
-                <p class="text-xs text-geo-100 hidden sm:block">국가유산청 국가유산포털 등록 주요 지질유산 탐색기</p>
+
+            <!-- 검색 및 필터 영역 -->
+            <div class="search-box">
+                <div class="input-wrapper">
+                    <input type="text" id="searchInput" placeholder="유적지명 또는 지역 검색 (예: 고성, 익룡)">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <div class="filter-tags">
+                    <button class="filter-btn active" data-filter="all">전체</button>
+                    <button class="filter-btn" data-filter="발자국">발자국 화석</button>
+                    <button class="filter-btn" data-filter="공룡알">공룡알 화석</button>
+                    <button class="filter-btn" data-filter="고생대">고생대/삼엽충</button>
+                </div>
+            </div>
+
+            <!-- 검색 결과 개수 -->
+            <div class="result-count">
+                검색 결과 <span id="countText">0</span>개
+            </div>
+
+            <!-- 화석 유적지 목록 -->
+            <div class="site-list" id="siteList">
+                <!-- JavaScript를 통해 동적으로 카드 목록이 생성됩니다 -->
             </div>
         </div>
 
-        <!-- 현재 내 위치 찾기 버튼 -->
-        <button id="btnMyLocation" class="flex items-center space-x-2 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-xs md:text-sm px-3.5 py-2 rounded-xl transition-all shadow-md font-medium border border-emerald-500/30">
-            <i class="fa-solid fa-location-crosshairs text-amber-300"></i>
-            <span>내 위치로 이동</span>
-        </button>
-    </header>
-
-    <!-- Main Content Container -->
-    <div class="flex flex-col md:flex-row flex-1 relative overflow-hidden">
-
-        <!-- Left Control Panel (사이드바) -->
-        <aside class="w-full md:w-96 bg-white shadow-2xl flex flex-col z-20 h-2/5 md:h-full border-r border-slate-200">
-            
-            <!-- 검색창 및 카테고리 필터 영역 -->
-            <div class="p-4 border-b border-slate-200 bg-slate-50/80 backdrop-blur shrink-0 space-y-3">
-                <!-- 검색 입력 박스 -->
-                <div class="relative">
-                    <input type="text" id="searchInput" placeholder="유적지명 또는 위치 검색 (예: 고성, 익룡)" 
-                           class="w-full pl-9 pr-8 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-geo-600 focus:border-transparent shadow-sm transition-all">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                    <button id="btnClearSearch" class="hidden absolute right-3 top-3 text-slate-400 hover:text-slate-600">
-                        <i class="fa-solid fa-circle-xmark text-sm"></i>
-                    </button>
-                </div>
-
-                <!-- 필터 버튼 목록 -->
-                <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs no-scrollbar" id="categoryFilterContainer">
-                    <button data-category="ALL" class="filter-btn active bg-geo-800 text-white px-3 py-1.5 rounded-lg font-medium whitespace-nowrap shadow-sm transition-all">전체보기</button>
-                    <button data-category="FOOTPRINT" class="filter-btn bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all">공룡발자국</button>
-                    <button data-category="EGG" class="filter-btn bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all">공룡알</button>
-                    <button data-category="BIRD" class="filter-btn bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all">익룡/새발자국</button>
-                    <button data-category="ANCIENT" class="filter-btn bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all">고생대/기타</button>
-                </div>
-
-                <!-- 카운터 표시 -->
-                <div class="flex justify-between items-center text-xs text-slate-500 pt-1 px-1">
-                    <span>검색 유적지: <strong id="resultCount" class="text-geo-700 font-bold text-sm">0</strong>개</span>
-                    <span class="text-[11px] text-slate-400">* 카드 클릭 시 해당 위치로 이동합니다</span>
-                </div>
-            </div>
-
-            <!-- 유적지 리스트 스크롤 영역 -->
-            <div id="fossilList" class="flex-1 overflow-y-auto p-3 space-y-2.5">
-                <!-- 자바스크립트로 동적 카드가 생성되어 들어옵니다 -->
-            </div>
-        </aside>
-
-        <!-- Right Kakao Map View -->
-        <main class="flex-1 h-3/5 md:h-full relative bg-slate-200">
-            <!-- 지도 엘리먼트 -->
-            <div id="map" class="w-full h-full"></div>
-
-            <!-- 지도 로딩 스피너 오버레이 -->
-            <div id="mapLoader" class="absolute inset-0 bg-slate-900/40 backdrop-blur-md flex flex-col items-center justify-center z-40 transition-opacity duration-300">
-                <div class="bg-white p-5 rounded-2xl shadow-2xl flex flex-col items-center space-y-3">
-                    <div class="w-10 h-10 border-4 border-geo-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p class="text-sm font-semibold text-slate-700">카카오 지도 및 유적지 데이터 로딩 중...</p>
-                </div>
-            </div>
-        </main>
+        <!-- 오른쪽 지도 -->
+        <div class="map-container">
+            <div id="map"></div>
+            <!-- 내 위치로 이동 버튼 -->
+            <button class="my-location-btn" id="myLocationBtn" title="현재 위치로 이동">
+                <i class="fa-solid fa-crosshairs"></i>
+            </button>
+        </div>
     </div>
 
     <script>
-        /**
-         * [국가유산청 국가유산포털 기반 공룡 및 화석 유적지 데이터셋]
-         */
-        const fossilDataset = [
+        // ==========================================
+        // 1. 국가유산청 지질유산 데이터셋 정의
+        // ==========================================
+        const fossilSites = [
             {
                 id: 1,
-                name: "고성 덕명리 공룡과 새발자국 화석산지",
-                designation: "천연기념물 제411호",
-                category: "FOOTPRINT",
-                categoryName: "공룡발자국",
+                title: "고성 덕명리 공룡과 새발자국 화석산지",
+                category: "발자국",
+                heritageNo: "천연기념물 제411호",
                 address: "경상남도 고성군 하이면 덕명리 해안 일원",
-                lat: 34.9125,
-                lng: 128.1482,
+                lat: 34.9126,
+                lng: 128.1472,
                 description: "세계적으로도 손꼽히는 공룡발자국 화석산지로 브라키오사우루스 등 다양한 초식·육식공룡과 새발자국 화석이 무더기로 발견되었습니다."
             },
             {
                 id: 2,
-                name: "해남 우항리 공룡·익룡·새발자국 화석산지",
-                designation: "천연기념물 제394호",
-                category: "BIRD",
-                categoryName: "익룡/새발자국",
+                title: "해남 우항리 공룡·익룡·새발자국 화석산지",
+                category: "발자국",
+                heritageNo: "천연기념물 제394호",
                 address: "전라남도 해남군 황산면 우항리",
-                lat: 34.6062,
-                lng: 126.4382,
-                description: "세계에서 가장 오래된 별 모양 정형 익룡 발자국과 물새 발자국 화석이 세계 최초로 한 지층에서 동시 발견된 유적지입니다."
+                lat: 34.6063,
+                lng: 126.4385,
+                description: "세계 최대 규모의 익룡 발자국과 함께 공룡, 새 발자국이 동일 지층에서 발견된 세계 유일의 정밀 화석지입니다."
             },
             {
                 id: 3,
-                name: "화성 고정리 공룡알 화석산지",
-                designation: "천연기념물 제414호",
-                category: "EGG",
-                categoryName: "공룡알",
-                address: "경기도 화성시 송산면 고정리",
-                lat: 37.2283,
-                lng: 126.7583,
-                description: "시화호 간척지에서 발견된 백악기 공룡알 화석지로, 둥지 30여 개에서 200여 개에 달하는 공룡알 화석이 다수 보존되어 있습니다."
+                title: "진주 충무공동 익룡·새·공룡발자국 화석산지",
+                category: "발자국",
+                heritageNo: "천연기념물 제534호",
+                address: "경상남도 진주시 충무공동",
+                lat: 35.1795,
+                lng: 128.1418,
+                description: "세계에서 가장 작은 랩터 공룡 발자국과 벼룩 화석 등 백악기 생태계를 완벽하게 간직한 최고 밀도의 화석산지입니다."
             },
             {
                 id: 4,
-                name: "화순 서유리 공룡발자국 화석산지",
-                designation: "천연기념물 제487호",
-                category: "FOOTPRINT",
-                categoryName: "공룡발자국",
-                address: "전라남도 화순군 백아면 서유리",
-                lat: 35.1278,
-                lng: 127.0894,
-                description: "육식공룡(수각류)의 보행렬이 세계 최고 수준으로 길고 정교하게 남아있어 빠른 이동 속도를 연구하는 데 중요한 자료입니다."
+                title: "화성 고정리 공룡알 화석산지",
+                category: "공룡알",
+                heritageNo: "천연기념물 제414호",
+                address: "경기도 화성시 송산면 고정리",
+                lat: 37.2285,
+                lng: 126.7582,
+                description: "시화호 간척지에서 발견된 대규모 공룡알 둥지 화석지로 200여 개가 넘는 공룡알 화석이 완벽한 형태로 보존되어 있습니다."
             },
             {
                 id: 5,
-                name: "의성 제오리 공룡발자국 화석산지",
-                designation: "천연기념물 제373호",
-                category: "FOOTPRINT",
-                categoryName: "공룡발자국",
-                address: "경상북도 의성군 금성면 제오리",
-                lat: 36.2625,
-                lng: 128.6942,
-                description: "도로 확장 공사 중 경사면 지층에서 발견되었으며, 대형 용각류와 조각류 등 300여 개의 공룡 발자국이 집중 보존되어 있습니다."
+                title: "화순 Seoryang-ri 공룡발자국 화석산지",
+                category: "발자국",
+                heritageNo: "천연기념물 제487호",
+                address: "전라남도 화순군 북면 서유리",
+                lat: 35.1278,
+                lng: 127.1265,
+                description: "육식공룡의 보행렬이 긴 거리로 뚜렷하게 남아있어 공룡의 이동 속도와 행동 특성을 규명하는 데 중요한 학술 자원입니다."
             },
             {
                 id: 6,
-                name: "진주 호탄동 백악기 공룡·익룡발자국 화석산지",
-                designation: "천연기념물 제566호",
-                category: "BIRD",
-                categoryName: "익룡/새발자국",
-                address: "경상남도 진주시 정촌면 뿌리산단로",
-                lat: 35.1488,
-                lng: 128.0945,
-                description: "세계 최대 밀도의 익룡 발자국과 캥거루처럼 뛴 뜀걸음 공룡 발자국, 정교한 선명한 공룡 피부 인쇄 화석이 수록되어 있습니다."
+                title: "의성 제오리 공룡발자국 화석산지",
+                category: "발자국",
+                heritageNo: "천연기념물 제373호",
+                address: "경상북도 의성군 금성면 제오리",
+                lat: 36.2625,
+                lng: 128.7188,
+                description: "도로 공사 중 발견되었으며 초식공룡과 육식공룡 발자국 300여 개가 경사면 지층에 빼곡하게 수록되어 있습니다."
             },
             {
                 id: 7,
-                name: "진주 가진리 새발자국과 공룡발자국 화석산지",
-                designation: "천연기념물 제395호",
-                category: "BIRD",
-                categoryName: "익룡/새발자국",
-                address: "경상남도 진주시 진성면 가진리",
-                lat: 35.1911,
-                lng: 128.2198,
-                description: "백악기 호숫가 생태계를 완벽히 재현하는 고생물 화석지로, 1만 여 개가 넘는 물새 및 공룡 발자국이 밀집되어 있습니다."
+                title: "태백 구문소 고생대 자원 화석산지",
+                category: "고생대",
+                heritageNo: "천연기념물 제417호",
+                address: "강원특별자치도 태백시 동점동",
+                lat: 37.0982,
+                lng: 129.0435,
+                description: "중생대 공룡 이전인 고생대 바다 생물인 삼엽충, 두족류, 완족류 화석 및 감람석 등의 지질 구조를 관찰할 수 있습니다."
             },
             {
                 id: 8,
-                name: "신안 압해도 수각류 공룡알 둥지 화석",
-                designation: "천연기념물 제535호",
-                category: "EGG",
-                categoryName: "공룡알",
-                address: "전라남도 목포시 용해동 (목포등대해양문화공간 보관)",
-                lat: 34.7951,
-                lng: 126.3712,
-                description: "국내 최대 규모의 대형 육식공룡(수각류) 알 둥지 화석으로 직경 2.3m 크기의 암반에 알이 둥지 형태를 이루고 있습니다."
+                title: "신안 압해도 수각류 공룡알 둥지 화석",
+                category: "공룡알",
+                heritageNo: "천연기념물 제535호",
+                address: "전라남도 신안군 압해읍",
+                lat: 34.8381,
+                lng: 126.3412,
+                description: "국내 최대 크기의 육식공룡알 둥지 화석으로 알 둥지 전체가 통째로 발굴되어 보존 상태가 매우 우수합니다."
             },
             {
                 id: 9,
-                name: "사천 아수리 공룡발자국 화석산지",
-                designation: "경상남도 유형유산",
-                category: "FOOTPRINT",
-                categoryName: "공룡발자국",
-                address: "경상남도 사천시 서포면 아수리 해안",
-                lat: 34.9701,
-                lng: 127.9734,
-                description: "아수리 해안 암반 지층에 용각류와 조각류의 보행 흔적이 뚜렷하게 배열되어 있는 중생대 백악기 지질 유적입니다."
+                title: "보성 비봉리 공룡알 화석산지",
+                category: "공룡알",
+                heritageNo: "천연기념물 제418호",
+                address: "전라남도 보성군 득량면 비봉리",
+                lat: 34.7225,
+                lng: 127.2381,
+                description: "해안가 암반층을 따라 다수의 공룡알 둥지와 공룡 뼈 화석이 발견된 중생대 백악기 산란지입니다."
             },
             {
                 id: 10,
-                name: "보성 비봉리 공룡알 화석산지",
-                designation: "천연기념물 제418호",
-                category: "EGG",
-                categoryName: "공룡알",
-                address: "전라남도 보성군 득량면 비봉리 해안",
-                lat: 34.7214,
-                lng: 127.2415,
-                description: "해안 암반에서 수십 여 개의 공룡알 둥지와 완벽한 형태의 공룡알 껍질 화석이 넓게 관찰되는 중생대 유적지입니다."
-            },
-            {
-                id: 11,
-                name: "태백 구문소 오르도비스기 지층과 화석산지",
-                designation: "천연기념물 제417호",
-                category: "ANCIENT",
-                categoryName: "고생대/기타",
-                address: "강원특별자치도 태백시 동점동 구문소",
-                lat: 37.0983,
-                lng: 129.0371,
-                description: "약 5억 년 전 고생대 바다 지층으로, 삼엽충, 완족류, 두족류 화석과 소금 흔적(건열) 등의 지질 구조가 고스란히 남아있습니다."
+                title: "사천 아두섬 공룡화석 산지",
+                category: "발자국",
+                heritageNo: "천연기념물 제474호",
+                address: "경상남도 사천시 하일면 아두섬",
+                lat: 34.9312,
+                lng: 128.1885,
+                description: "공룡알 화석과 함께 공룡 뼈 화석 조각이 함께 출토된 남해안 지질 유산의 핵심 지역입니다."
             }
         ];
 
-        // 전역 메인 상태 객체
-        let mapInstance = null;
-        let activeInfoWindowOverlay = null;
-        let activeMarkers = [];
-        let userLocationMarker = null;
-        let selectedCategoryFilter = 'ALL';
-        let currentRenderedList = [...fossilDataset];
+        // Global 전역 변수
+        let map = null;
+        let markers = [];
+        let activeInfoWindow = null;
+        let currentFilter = 'all';
 
-        const DEFAULT_FALLBACK_CENTER = { lat: 36.4800, lng: 127.2890 };
-        const DEFAULT_ZOOM_LEVEL = 5;
+        // ==========================================
+        // 2. 카카오 지도 SDK 비동기 로드 및 초기화
+        // ==========================================
+        window.onload = function() {
+            // kakao.maps.load 콜백을 이용해 안전하게 로드
+            kakao.maps.load(function() {
+                initMap();
+            });
+        };
 
-        /**
-         * kakao.maps.load 콜백으로 로드
-         */
-        window.addEventListener('load', () => {
-            if (typeof kakao !== 'undefined' && kakao.maps) {
-                kakao.maps.load(() => {
-                    initFossilMapApp();
-                });
-            } else {
-                alert('카카오 지도 API 로드에 실패했습니다. API 키 및 인터넷 연결을 확인해 주세요.');
-            }
-        });
-
-        /**
-         * 애플리케이션 초기화
-         */
-        function initFossilMapApp() {
-            const mapContainer = document.getElementById('map');
-            const mapOptions = {
-                center: new kakao.maps.LatLng(DEFAULT_FALLBACK_CENTER.lat, DEFAULT_FALLBACK_CENTER.lng),
-                level: DEFAULT_ZOOM_LEVEL
+        // 지도 초기화 함수
+        function initMap() {
+            const container = document.getElementById('map');
+            const defaultCenter = new kakao.maps.LatLng(35.907757, 127.766922); // 한국 중앙 좌표 fallback
+            
+            const options = {
+                center: defaultCenter,
+                level: 5 // 요구사항: 확대 레벨 5
             };
 
-            mapInstance = new kakao.maps.Map(mapContainer, mapOptions);
+            // 지도 생성
+            map = new kakao.maps.Map(container, options);
 
+            // 지도 컨트롤 추가 (줌 컨트롤)
             const zoomControl = new kakao.maps.ZoomControl();
-            mapInstance.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+            map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 
-            fetchUserCurrentLocation();
-            renderFossilData();
-            attachEventListeners();
+            // 현재 위치 받아오기 (Geolocation API)
+            fetchUserLocation();
 
-            const loader = document.getElementById('mapLoader');
-            if (loader) {
-                loader.classList.add('opacity-0');
-                setTimeout(() => loader.style.display = 'none', 300);
-            }
+            // 리스트 초기화 및 마커 표시
+            renderSiteList(fossilSites);
+            displayMarkers(fossilSites);
+
+            // 이벤트 리스너 등록
+            initEventListeners();
         }
 
-        /**
-         * 현재 위치 탐색
-         */
-        function fetchUserCurrentLocation() {
+        // 사용자 현재 위치 파악
+        function fetchUserLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const userLat = position.coords.latitude;
                         const userLng = position.coords.longitude;
-                        const userLatLng = new kakao.maps.LatLng(userLat, userLng);
+                        const userPosition = new kakao.maps.LatLng(userLat, userLng);
 
-                        mapInstance.setCenter(userLatLng);
-                        mapInstance.setLevel(DEFAULT_ZOOM_LEVEL);
+                        // 지도의 중심을 현재 위치로 이동 및 레벨 5 설정
+                        map.setCenter(userPosition);
+                        map.setLevel(5);
 
-                        if (userLocationMarker) userLocationMarker.setMap(null);
+                        // 현재 위치 표시 커스텀 마커
+                        const locationMarkerContent = `
+                            <div style="padding:8px 12px; background:#2563eb; color:#fff; font-size:11px; font-weight:bold; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid #fff;">
+                                <i class="fa-solid fa-user-location"></i> 현재 내 위치
+                            </div>
+                        `;
 
-                        const userMarkerElement = document.createElement('div');
-                        userMarkerElement.className = 'user-pulse-marker flex items-center justify-center';
-                        userMarkerElement.innerHTML = `<div class="w-3.5 h-3.5 bg-sky-600 border-2 border-white rounded-full shadow-md z-10"></div>`;
-
-                        userLocationMarker = new kakao.maps.CustomOverlay({
-                            position: userLatLng,
-                            content: userMarkerElement,
-                            yAnchor: 0.5,
-                            xAnchor: 0.5
+                        const customOverlay = new kakao.maps.CustomOverlay({
+                            position: userPosition,
+                            content: locationMarkerContent,
+                            yAnchor: 1
                         });
 
-                        userLocationMarker.setMap(mapInstance);
+                        customOverlay.setMap(map);
                     },
                     (error) => {
-                        console.warn("Geolocation 권한 거부 또는 오류:", error.message);
-                        mapInstance.setCenter(new kakao.maps.LatLng(DEFAULT_FALLBACK_CENTER.lat, DEFAULT_FALLBACK_CENTER.lng));
-                    },
-                    { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
+                        console.warn("위치 정보를 가져올 수 없어 기본 중심지로 이동합니다.", error);
+                    }
                 );
             }
         }
 
-        /**
-         * 목록 및 마커 렌더링
-         */
-        function renderFossilData() {
-            clearAllMarkers();
-            if (activeInfoWindowOverlay) {
-                activeInfoWindowOverlay.setMap(null);
-                activeInfoWindowOverlay = null;
+        // ==========================================
+        // 3. 마커 및 인포윈도우 렌더링
+        // ==========================================
+        function displayMarkers(sites) {
+            // 기존 마커 제거
+            clearMarkers();
+
+            sites.forEach((site) => {
+                const markerPosition = new kakao.maps.LatLng(site.lat, site.lng);
+
+                // 마커 생성
+                const marker = new kakao.maps.Marker({
+                    position: markerPosition,
+                    map: map,
+                    title: site.title
+                });
+
+                // 마커 저장
+                markers.push({
+                    id: site.id,
+                    instance: marker
+                });
+
+                // 마커 클릭 이벤트
+                kakao.maps.event.addListener(marker, 'click', function() {
+                    openInfoWindow(site, marker);
+                    highlightListItem(site.id);
+                });
+            });
+        }
+
+        // 인포윈도우 오픈 함수
+        function openInfoWindow(site, marker) {
+            if (activeInfoWindow) {
+                activeInfoWindow.close();
             }
 
-            const listContainer = document.getElementById('fossilList');
-            const countDisplay = document.getElementById('resultCount');
-            listContainer.innerHTML = '';
-            countDisplay.innerText = currentRenderedList.length;
+            // 길찾기 카카오맵 URL
+            const mapSearchUrl = `https://map.kakao.com/link/to/${encodeURIComponent(site.title)},${site.lat},${site.lng}`;
 
-            if (currentRenderedList.length === 0) {
+            // 인포윈도우 HTML 구성 (자동 줄바꿈 스타일 적용)
+            const content = `
+                <div class="kakao-custom-infowindow">
+                    <span class="info-category">${site.heritageNo}</span>
+                    <h3 class="info-title">${site.title}</h3>
+                    <div class="info-address">
+                        <i class="fa-solid fa-location-dot"></i> ${site.address}
+                    </div>
+                    <!-- 자동 줄바꿈이 완벽하게 처리된 설명란 -->
+                    <div class="info-desc">
+                        ${site.description}
+                    </div>
+                    <a href="${mapSearchUrl}" target="_blank" class="info-btn">
+                        <i class="fa-solid fa-route"></i> 카카오맵 길찾기
+                    </a>
+                </div>
+            `;
+
+            activeInfoWindow = new kakao.maps.InfoWindow({
+                content: content,
+                removable: true
+            });
+
+            activeInfoWindow.open(map, marker);
+            map.panTo(new kakao.maps.LatLng(site.lat, site.lng));
+        }
+
+        // 마커 초기화
+        function clearMarkers() {
+            markers.forEach(m => m.instance.setMap(null));
+            markers = [];
+        }
+
+        // ==========================================
+        // 4. 왼쪽 사이드바 리스트 렌더링
+        // ==========================================
+        function renderSiteList(sites) {
+            const listContainer = document.getElementById('siteList');
+            const countText = document.getElementById('countText');
+            
+            listContainer.innerHTML = '';
+            countText.innerText = sites.length;
+
+            if (sites.length === 0) {
                 listContainer.innerHTML = `
-                    <div class="text-center py-12 text-slate-400">
-                        <i class="fa-solid fa-magnifying-glass-location text-3xl mb-3 text-slate-300"></i>
-                        <p class="text-sm font-medium">검색어와 일치하는 화석 유적지가 없습니다.</p>
+                    <div style="text-align:center; padding:40px 0; color:#94a3b8; font-size:13px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size:24px; margin-bottom:8px; display:block;"></i>
+                        검색 조건에 맞는 화석 유적지가 없습니다.
                     </div>
                 `;
                 return;
             }
 
-            currentRenderedList.forEach((site) => {
-                const siteLatLng = new kakao.maps.LatLng(site.lat, site.lng);
+            sites.forEach(site => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'site-item';
+                itemDiv.id = `site-item-${site.id}`;
 
-                const marker = new kakao.maps.Marker({
-                    position: siteLatLng,
-                    title: site.name
-                });
-                marker.setMap(mapInstance);
-                activeMarkers.push(marker);
-
-                kakao.maps.event.addListener(marker, 'click', () => {
-                    handleSelectFossilSite(site, marker);
-                });
-
-                const card = document.createElement('div');
-                card.className = 'site-card bg-white p-3.5 rounded-xl border border-slate-200 hover:border-geo-600 hover:shadow-md transition-all duration-200 cursor-pointer group relative';
-                card.dataset.id = site.id;
-
-                card.innerHTML = `
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-bold text-geo-800 bg-geo-50 border border-geo-600/20 px-2 py-0.5 rounded-md">
-                            ${site.designation}
-                        </span>
-                        <span class="text-[11px] text-amber-700 font-medium">${site.categoryName}</span>
-                    </div>
-                    <h3 class="font-bold text-sm text-slate-800 group-hover:text-geo-700 transition-colors leading-snug">${site.name}</h3>
-                    <p class="text-xs text-slate-500 mt-1 line-clamp-1"><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i>${site.address}</p>
+                itemDiv.innerHTML = `
+                    <span class="site-category">${site.heritageNo}</span>
+                    <div class="site-title">${site.title}</div>
+                    <div class="site-address"><i class="fa-solid fa-location-dot"></i> ${site.address}</div>
+                    <div class="site-desc">${site.description}</div>
                 `;
 
-                card.addEventListener('click', () => {
-                    handleSelectFossilSite(site, marker);
+                // 리스트 아이템 클릭 시 이벤트
+                itemDiv.addEventListener('click', () => {
+                    const targetMarker = markers.find(m => m.id === site.id);
+                    if (targetMarker) {
+                        openInfoWindow(site, targetMarker.instance);
+                        highlightListItem(site.id);
+                    }
                 });
 
-                listContainer.appendChild(card);
+                listContainer.appendChild(itemDiv);
             });
         }
 
-        /**
-         * 카드/마커 클릭 시 팝업 띄우기 (크기 확장 및 텍스트 짤림 해결 적용)
-         */
-        function handleSelectFossilSite(site, marker) {
-            const targetLatLng = new kakao.maps.LatLng(site.lat, site.lng);
-
-            mapInstance.panTo(targetLatLng);
-
-            if (activeInfoWindowOverlay) {
-                activeInfoWindowOverlay.setMap(null);
+        // 리스트 하이라이트 표시
+        function highlightListItem(siteId) {
+            document.querySelectorAll('.site-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const selectedItem = document.getElementById(`site-item-${siteId}`);
+            if (selectedItem) {
+                selectedItem.classList.add('active');
+                selectedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
-
-            // 인포윈도우 DOM 엘리먼트 (너비 및 텍스트 감싸기 강화)
-            const overlayNode = document.createElement('div');
-            overlayNode.className = 'info-card-overlay bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 transition-all text-left';
-            
-            overlayNode.innerHTML = `
-                <div class="flex items-start justify-between mb-2">
-                    <span class="text-[10px] font-bold text-geo-800 bg-geo-50 border border-geo-600/20 px-2 py-0.5 rounded-md inline-block">
-                        ${site.designation}
-                    </span>
-                    <button class="close-overlay-btn text-slate-400 hover:text-slate-600 p-1 -mr-1 -mt-1 shrink-0">
-                        <i class="fa-solid fa-xmark text-base"></i>
-                    </button>
-                </div>
-                <h4 class="font-bold text-base text-slate-900 leading-snug mb-1.5 break-keep">${site.name}</h4>
-                <p class="text-xs text-slate-500 mb-2.5 flex items-start break-all">
-                    <i class="fa-solid fa-map-pin text-rose-500 mr-1.5 mt-0.5 shrink-0"></i>
-                    <span>${site.address}</span>
-                </p>
-                <!-- 설명란: 높이 자동조절, 텍스트 자동 줄바꿈(break-keep)으로 상자 안에 다 들어가도록 조정 -->
-                <p class="text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed mb-3 break-keep">
-                    ${site.description}
-                </p>
-                <div class="flex justify-end">
-                    <a href="https://map.kakao.com/link/map/${encodeURIComponent(site.name)},${site.lat},${site.lng}" 
-                       target="_blank" 
-                       class="inline-flex items-center space-x-1.5 text-xs bg-geo-700 hover:bg-geo-800 text-white font-medium px-3.5 py-2 rounded-lg shadow-sm transition-colors">
-                        <span>카카오맵 길찾기</span>
-                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                    </a>
-                </div>
-            `;
-
-            overlayNode.querySelector('.close-overlay-btn').addEventListener('click', () => {
-                if (activeInfoWindowOverlay) {
-                    activeInfoWindowOverlay.setMap(null);
-                    activeInfoWindowOverlay = null;
-                }
-            });
-
-            activeInfoWindowOverlay = new kakao.maps.CustomOverlay({
-                content: overlayNode,
-                map: mapInstance,
-                position: marker.getPosition(),
-                yAnchor: 1.2,
-                xAnchor: 0.5
-            });
-
-            highlightActiveCard(site.id);
         }
 
-        function highlightActiveCard(siteId) {
-            document.querySelectorAll('.site-card').forEach(card => {
-                if (parseInt(card.dataset.id) === siteId) {
-                    card.classList.add('border-geo-600', 'bg-geo-50/40', 'ring-2', 'ring-geo-600/20');
-                    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                    card.classList.remove('border-geo-600', 'bg-geo-50/40', 'ring-2', 'ring-geo-600/20');
-                }
-            });
-        }
-
-        function clearAllMarkers() {
-            activeMarkers.forEach(m => m.setMap(null));
-            activeMarkers = [];
-        }
-
-        function executeSearchAndFilter() {
-            const searchKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
-            const btnClear = document.getElementById('btnClearSearch');
-
-            if (searchKeyword.length > 0) {
-                btnClear.classList.remove('hidden');
-            } else {
-                btnClear.classList.add('hidden');
-            }
-
-            currentRenderedList = fossilDataset.filter(item => {
-                const categoryMatch = (selectedCategoryFilter === 'ALL') || (item.category === selectedCategoryFilter);
-                const keywordMatch = !searchKeyword || 
-                    item.name.toLowerCase().includes(searchKeyword) || 
-                    item.address.toLowerCase().includes(searchKeyword) || 
-                    item.description.toLowerCase().includes(searchKeyword);
-
-                return categoryMatch && keywordMatch;
-            });
-
-            renderFossilData();
-        }
-
-        function attachEventListeners() {
+        // ==========================================
+        // 5. 검색 및 필터링 이벤트 핸들러
+        // ==========================================
+        function initEventListeners() {
             const searchInput = document.getElementById('searchInput');
-            const btnClear = document.getElementById('btnClearSearch');
             const filterBtns = document.querySelectorAll('.filter-btn');
+            const myLocationBtn = document.getElementById('myLocationBtn');
 
-            searchInput.addEventListener('input', executeSearchAndFilter);
+            // 검색어 입력 이벤트
+            searchInput.addEventListener('input', filterData);
 
-            btnClear.addEventListener('click', () => {
-                searchInput.value = '';
-                executeSearchAndFilter();
-                searchInput.focus();
-            });
-
-            document.getElementById('btnMyLocation').addEventListener('click', () => {
-                fetchUserCurrentLocation();
-            });
-
+            // 카테고리 필터 버튼 클릭 이벤트
             filterBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    filterBtns.forEach(b => {
-                        b.classList.remove('bg-geo-800', 'text-white', 'shadow-sm');
-                        b.classList.add('bg-white', 'text-slate-600', 'border', 'border-slate-200');
-                    });
-
-                    e.currentTarget.classList.remove('bg-white', 'text-slate-600', 'border', 'border-slate-200');
-                    e.currentTarget.classList.add('bg-geo-800', 'text-white', 'shadow-sm');
-
-                    selectedCategoryFilter = e.currentTarget.dataset.category;
-                    executeSearchAndFilter();
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.getAttribute('data-filter');
+                    filterData();
                 });
             });
+
+            // 내 위치로 다시 이동 버튼
+            myLocationBtn.addEventListener('click', () => {
+                fetchUserLocation();
+            });
+        }
+
+        // 데이터 필터링 실행 함수
+        function filterData() {
+            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+
+            const filtered = fossilSites.filter(site => {
+                // 키워드 조건 (제목 또는 주소)
+                const matchesKeyword = site.title.toLowerCase().includes(keyword) || 
+                                       site.address.toLowerCase().includes(keyword);
+
+                // 카테고리 조건
+                const matchesCategory = (currentFilter === 'all') || (site.category === currentFilter);
+
+                return matchesKeyword && matchesCategory;
+            });
+
+            // 필터링된 결과로 지도 마커와 리스트 재구성
+            renderSiteList(filtered);
+            displayMarkers(filtered);
         }
     </script>
 </body>
 </html>
-```
-
