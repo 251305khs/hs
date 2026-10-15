@@ -13,9 +13,6 @@
     <!-- FontAwesome 아이콘 CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Kakao Map API Script (autoload=false 적용) -->
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=7d14000415f15479685251ad82a6da74&autoload=false"></script>
-
     <style>
         /* 기본 스타일 초기화 */
         * {
@@ -125,11 +122,11 @@
             gap: 6px;
             overflow-x: auto;
             padding-bottom: 4px;
-            scrollbar-width: none; /* 파이어폭스 스크롤바 숨김 */
+            scrollbar-width: none;
         }
 
         .filter-tags::-webkit-scrollbar {
-            display: none; /* 크롬/사파리 스크롤바 숨김 */
+            display: none;
         }
 
         .filter-btn {
@@ -308,7 +305,6 @@
             gap: 4px;
         }
 
-        /* 요청하신 설명 텍스트 박스 줄바꿈 핵심 스타일 */
         .info-desc {
             font-size: 13px;
             color: #334155;
@@ -318,7 +314,7 @@
             border-radius: 8px;
             margin-bottom: 12px;
             
-            /* 핵심 추가 코드: 카카오 기본 nowrap 무효화 및 단어 단위 줄바꿈 설정 */
+            /* 자동 줄바꿈 처리 */
             white-space: normal !important;
             word-break: keep-all;
             overflow-wrap: break-word;
@@ -344,7 +340,7 @@
             background-color: #1d4ed8;
         }
 
-        /* 모바일 반응형 처리 */
+        /* 모바일 반응형 */
         @media (max-width: 768px) {
             .app-container {
                 flex-direction: column-reverse;
@@ -369,20 +365,19 @@
                     <i class="fa-solid fa-bone"></i>
                     <h1 class="logo-title">국내 공룡 화석 발자취 지도</h1>
                 </div>
-                <div class="logo-subtitle">국가유산청 지질유산 데이터 기반</div>
+                <div class="logo-subtitle">국가유산청 중생대 공룡 유산 데이터</div>
             </div>
 
             <!-- 검색 및 필터 영역 -->
             <div class="search-box">
                 <div class="input-wrapper">
-                    <input type="text" id="searchInput" placeholder="유적지명 또는 지역 검색 (예: 고성, 익룡)">
+                    <input type="text" id="searchInput" placeholder="유적지명 또는 지역 검색 (예: 고성, 여수)">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </div>
                 <div class="filter-tags">
                     <button class="filter-btn active" data-filter="all">전체</button>
                     <button class="filter-btn" data-filter="발자국">발자국 화석</button>
                     <button class="filter-btn" data-filter="공룡알">공룡알 화석</button>
-                    <button class="filter-btn" data-filter="고생대">고생대/삼엽충</button>
                 </div>
             </div>
 
@@ -393,7 +388,7 @@
 
             <!-- 화석 유적지 목록 -->
             <div class="site-list" id="siteList">
-                <!-- JavaScript를 통해 동적으로 카드 목록이 생성됩니다 -->
+                <!-- JavaScript 목록 동적 생성 -->
             </div>
         </div>
 
@@ -409,7 +404,7 @@
 
     <script>
         // ==========================================
-        // 1. 국가유산청 지질유산 데이터셋 정의
+        // 1. 중생대 공룡·익룡·새·공룡알 화석산지 데이터셋 (총 10개)
         // ==========================================
         const fossilSites = [
             {
@@ -454,7 +449,7 @@
             },
             {
                 id: 5,
-                title: "화순 Seoryang-ri 공룡발자국 화석산지",
+                title: "화순 서유리 공룡발자국 화석산지",
                 category: "발자국",
                 heritageNo: "천연기념물 제487호",
                 address: "전라남도 화순군 북면 서유리",
@@ -474,16 +469,6 @@
             },
             {
                 id: 7,
-                title: "태백 구문소 고생대 자원 화석산지",
-                category: "고생대",
-                heritageNo: "천연기념물 제417호",
-                address: "강원특별자치도 태백시 동점동",
-                lat: 37.0982,
-                lng: 129.0435,
-                description: "중생대 공룡 이전인 고생대 바다 생물인 삼엽충, 두족류, 완족류 화석 및 감람석 등의 지질 구조를 관찰할 수 있습니다."
-            },
-            {
-                id: 8,
                 title: "신안 압해도 수각류 공룡알 둥지 화석",
                 category: "공룡알",
                 heritageNo: "천연기념물 제535호",
@@ -493,7 +478,7 @@
                 description: "국내 최대 크기의 육식공룡알 둥지 화석으로 알 둥지 전체가 통째로 발굴되어 보존 상태가 매우 우수합니다."
             },
             {
-                id: 9,
+                id: 8,
                 title: "보성 비봉리 공룡알 화석산지",
                 category: "공룡알",
                 heritageNo: "천연기념물 제418호",
@@ -503,7 +488,7 @@
                 description: "해안가 암반층을 따라 다수의 공룡알 둥지와 공룡 뼈 화석이 발견된 중생대 백악기 산란지입니다."
             },
             {
-                id: 10,
+                id: 9,
                 title: "사천 아두섬 공룡화석 산지",
                 category: "발자국",
                 heritageNo: "천연기념물 제474호",
@@ -511,6 +496,16 @@
                 lat: 34.9312,
                 lng: 128.1885,
                 description: "공룡알 화석과 함께 공룡 뼈 화석 조각이 함께 출토된 남해안 지질 유산의 핵심 지역입니다."
+            },
+            {
+                id: 10,
+                title: "여수 낭도리 공룡발자국 화석산지",
+                category: "발자국",
+                heritageNo: "천연기념물 제434호",
+                address: "전라남도 여수시 화정면 낭도리 일원",
+                lat: 34.5983,
+                lng: 127.5512,
+                description: "사도, 낭도, 추도 등 5개 섬지역을 포함하며 백악기 다종 공룡발자국 화석 3,500여 개가 넓게 분포되어 있습니다."
             }
         ];
 
@@ -521,40 +516,43 @@
         let currentFilter = 'all';
 
         // ==========================================
-        // 2. 카카오 지도 SDK 비동기 로드 및 초기화
+        // 2. 카카오 지도 SDK 동적 로드 (document.write 차단 방지)
         // ==========================================
+        function loadKakaoMapScript() {
+            const script = document.createElement('script');
+            script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=7d14000415f15479685251ad82a6da74&autoload=false';
+            script.onload = () => {
+                kakao.maps.load(() => {
+                    initMap();
+                });
+            };
+            document.head.appendChild(script);
+        }
+
         window.onload = function() {
-            // kakao.maps.load 콜백을 이용해 안전하게 로드
-            kakao.maps.load(function() {
-                initMap();
-            });
+            loadKakaoMapScript();
         };
 
         // 지도 초기화 함수
         function initMap() {
             const container = document.getElementById('map');
-            const defaultCenter = new kakao.maps.LatLng(35.907757, 127.766922); // 한국 중앙 좌표 fallback
+            const defaultCenter = new kakao.maps.LatLng(35.907757, 127.766922);
             
             const options = {
                 center: defaultCenter,
-                level: 5 // 요구사항: 확대 레벨 5
+                level: 5
             };
 
-            // 지도 생성
             map = new kakao.maps.Map(container, options);
 
-            // 지도 컨트롤 추가 (줌 컨트롤)
             const zoomControl = new kakao.maps.ZoomControl();
             map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 
-            // 현재 위치 받아오기 (Geolocation API)
             fetchUserLocation();
 
-            // 리스트 초기화 및 마커 표시
             renderSiteList(fossilSites);
             displayMarkers(fossilSites);
 
-            // 이벤트 리스너 등록
             initEventListeners();
         }
 
@@ -567,11 +565,9 @@
                         const userLng = position.coords.longitude;
                         const userPosition = new kakao.maps.LatLng(userLat, userLng);
 
-                        // 지도의 중심을 현재 위치로 이동 및 레벨 5 설정
                         map.setCenter(userPosition);
                         map.setLevel(5);
 
-                        // 현재 위치 표시 커스텀 마커
                         const locationMarkerContent = `
                             <div style="padding:8px 12px; background:#2563eb; color:#fff; font-size:11px; font-weight:bold; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid #fff;">
                                 <i class="fa-solid fa-user-location"></i> 현재 내 위치
@@ -587,7 +583,7 @@
                         customOverlay.setMap(map);
                     },
                     (error) => {
-                        console.warn("위치 정보를 가져올 수 없어 기본 중심지로 이동합니다.", error);
+                        console.warn("위치 정보를 가져올 수 없어 기본 좌표를 사용합니다.", error);
                     }
                 );
             }
@@ -597,26 +593,22 @@
         // 3. 마커 및 인포윈도우 렌더링
         // ==========================================
         function displayMarkers(sites) {
-            // 기존 마커 제거
             clearMarkers();
 
             sites.forEach((site) => {
                 const markerPosition = new kakao.maps.LatLng(site.lat, site.lng);
 
-                // 마커 생성
                 const marker = new kakao.maps.Marker({
                     position: markerPosition,
                     map: map,
                     title: site.title
                 });
 
-                // 마커 저장
                 markers.push({
                     id: site.id,
                     instance: marker
                 });
 
-                // 마커 클릭 이벤트
                 kakao.maps.event.addListener(marker, 'click', function() {
                     openInfoWindow(site, marker);
                     highlightListItem(site.id);
@@ -624,16 +616,13 @@
             });
         }
 
-        // 인포윈도우 오픈 함수
         function openInfoWindow(site, marker) {
             if (activeInfoWindow) {
                 activeInfoWindow.close();
             }
 
-            // 길찾기 카카오맵 URL
             const mapSearchUrl = `https://map.kakao.com/link/to/${encodeURIComponent(site.title)},${site.lat},${site.lng}`;
 
-            // 인포윈도우 HTML 구성 (자동 줄바꿈 스타일 적용)
             const content = `
                 <div class="kakao-custom-infowindow">
                     <span class="info-category">${site.heritageNo}</span>
@@ -641,7 +630,6 @@
                     <div class="info-address">
                         <i class="fa-solid fa-location-dot"></i> ${site.address}
                     </div>
-                    <!-- 자동 줄바꿈이 완벽하게 처리된 설명란 -->
                     <div class="info-desc">
                         ${site.description}
                     </div>
@@ -660,7 +648,6 @@
             map.panTo(new kakao.maps.LatLng(site.lat, site.lng));
         }
 
-        // 마커 초기화
         function clearMarkers() {
             markers.forEach(m => m.instance.setMap(null));
             markers = [];
@@ -698,7 +685,6 @@
                     <div class="site-desc">${site.description}</div>
                 `;
 
-                // 리스트 아이템 클릭 시 이벤트
                 itemDiv.addEventListener('click', () => {
                     const targetMarker = markers.find(m => m.id === site.id);
                     if (targetMarker) {
@@ -711,7 +697,6 @@
             });
         }
 
-        // 리스트 하이라이트 표시
         function highlightListItem(siteId) {
             document.querySelectorAll('.site-item').forEach(item => {
                 item.classList.remove('active');
@@ -731,10 +716,8 @@
             const filterBtns = document.querySelectorAll('.filter-btn');
             const myLocationBtn = document.getElementById('myLocationBtn');
 
-            // 검색어 입력 이벤트
             searchInput.addEventListener('input', filterData);
 
-            // 카테고리 필터 버튼 클릭 이벤트
             filterBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     filterBtns.forEach(b => b.classList.remove('active'));
@@ -744,28 +727,23 @@
                 });
             });
 
-            // 내 위치로 다시 이동 버튼
             myLocationBtn.addEventListener('click', () => {
                 fetchUserLocation();
             });
         }
 
-        // 데이터 필터링 실행 함수
         function filterData() {
             const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
 
             const filtered = fossilSites.filter(site => {
-                // 키워드 조건 (제목 또는 주소)
                 const matchesKeyword = site.title.toLowerCase().includes(keyword) || 
                                        site.address.toLowerCase().includes(keyword);
 
-                // 카테고리 조건
                 const matchesCategory = (currentFilter === 'all') || (site.category === currentFilter);
 
                 return matchesKeyword && matchesCategory;
             });
 
-            // 필터링된 결과로 지도 마커와 리스트 재구성
             renderSiteList(filtered);
             displayMarkers(filtered);
         }
